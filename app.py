@@ -1,11 +1,15 @@
-from urllib import response
 from fastapi import FastAPI
 from starlette.responses import RedirectResponse
+from routes.user import user
 
 
-## instancia app
+## create instance for FastApi
 app = FastAPI()
+app.include_router(user)
 
-app.get(path="/")
+
+## path operation for redirect to documentation
+@app.get(path="/",
+         tags=["index"])
 def index():
     return RedirectResponse("/docs")

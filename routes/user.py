@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from fastapi import status, HTTPException
+from fastapi import status, HTTPException, Response
+from sqlalchemy import null
 from config.db import conn
 from models.user import users
 from schemas.users import User
@@ -25,9 +26,10 @@ def create_user(user:User):
     > This path operation, create a new user, Encrypt password for stored in the database
 
     **Args:** <br>
-    > **user**: User -> Body Request
+    - **user**: User -> Body Request
     - id -> Optional[str] because is primary Key into database.
-    - name str
+    - first name str
+    - last name str
     - email EmailStr, Email validated
     - password str, min legth is 8  character
         
@@ -54,21 +56,20 @@ def login_a_user():
     return "login user"
 
 
-
-
 @user.get(path="/users/",
           status_code=status.HTTP_200_OK,
           response_model=List[User],
           summary="Show all users",
           tags=["users"])
 def get_users():
-    """_summary_:</br> </br> This path operation, get all users
+    """**_summary_:**<br>
+    > This path operation, get all users
 
-    Args:
-        _Args_: </br> </br>None, Only Select Table database and response
+    **Args:** <br>
+    > _Args_: None, Only Select Table database and response
     
-    Returns:
-        _type_: </br> </br> List all Users
+    **Returns:**<br>
+    > _type_: List all Users
     """
     return conn.execute(users.select()).fetchall()
 
@@ -77,35 +78,61 @@ def get_users():
           status_code=status.HTTP_200_OK,
           summary="Show a user",
           tags=["users"])
-def show_a_users():
-    """_summary_
+def get_user(id : int):
+    """**_summary_:**<br>
+    > This path operation, get a user for id 
 
-    Returns:
-        _type_: _description_
+    **Args:** <br>
+    > _Args_: id: int
+    
+    **Returns:**<br>
+    > _type_: User
     """
-    return "show a user"
+    
+    return conn.execute(users.select().where(users.c.id == id)).first()
+
 
 
 @user.put(path="/users/{user_id}/update",
           status_code=status.HTTP_200_OK,
+          response_model=User,
           summary="Update a user",
           tags=["users"])
-def update_a_users():
-    """_summary_
+def update_user(user: User, id: int):
+    """**_summary_:**<br>
+    > This path operation, Update a user for id
 
-    Returns:
-        _type_: _description_
+    **Args:** <br>
+    > _Args_: 
+    id: int -> request body
+    user : User -> request body
+    
+    **Returns:**<br>
+    > _type_: user model update
     """
-    return "update a user"
+    conn.execute(users.update().values(
+        first_name =user.first_name,
+        last_name =user.last_name,
+        email=user.email,
+        password=CRYPH.encrypt(user.password.encode("utf_8"))
+        ).where(users.c.id == id))
+    return conn.execute(users.select().where(users.c.id == id)).first()
 
 
 @user.delete(path="/users/{user_id}/delete",
           summary="Delete a user",
           tags=["users"])
-def delete_a_users():
-    """_summary_
+def delete_user(id : int):
+    """**_summary_:**<br>
+    > This path operation, Delete a user for id
 
-    Returns:
-        _type_: _description_
+    **Args:** <br>
+    > _Args_: 
+    id: int -> request body
+    user : User -> request body
+    
+    **Returns:**<br>
+    > _type_: user model update
     """
-    return "delete a user"
+    conn.execute(users.delete().where(users.c.id == id))
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

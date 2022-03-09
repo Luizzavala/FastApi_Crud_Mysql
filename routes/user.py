@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from fastapi import status, HTTPException, Response
-from sqlalchemy import null
 from config.db import conn
 from models.user import users
 from schemas.users import User
@@ -129,10 +128,9 @@ def delete_user(id : int):
     **Args:** <br>
     > _Args_: 
     id: int -> request body
-    user : User -> request body
-    
+        
     **Returns:**<br>
-    > _type_: user model update
+    > _type_: Response status 204 NO CONTENT
     """
     conn.execute(users.delete().where(users.c.id == id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)

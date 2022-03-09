@@ -3,27 +3,48 @@ from fastapi import status, HTTPException
 from config.db import conn
 from models.user import users
 from schemas.users import User
+from typing import List
+from cryptography.fernet import Fernet
+
+
 
 # create instance for user
 user = APIRouter()
+#Generator for key 
+SECURE_KEY = Fernet.generate_key()
+CRYPH = Fernet(SECURE_KEY)
 
 
 @user.post(path="/users/singup",
-          status_code=status.HTTP_201_CREATED,
+          status_code= status.HTTP_201_CREATED,
+          response_model=User,
           summary="register a user",
           tags=["users"])
 def create_user(user:User):
-    """_summary_
+    """**_summary_** <br>
+    > This path operation, create a new user, Encrypt password for stored in the database
 
-    Returns:
-        _type_: _description_
+    **Args:** <br>
+    > **user**: User -> Body Request
+    - id -> Optional[str] because is primary Key into database.
+    - name str
+    - email EmailStr, Email validated
+    - password str, min legth is 8  character
+        
+    **Returns:**<br>
+    > Cursor: select to database with dates only password its encrypt
     """
-    return user.dict()
+    user = user.dict()
+    password = user["password"] 
+    user["password"] = CRYPH.encrypt(password.encode("utf_8"))
+    result = conn.execute(users.insert().values(user))
+    return conn.execute(users.select().where(users.c.id == result.lastrowid)).first()
 
 @user.post(path="/users/login",
           status_code=status.HTTP_200_OK,
           summary="login a user",
-          tags=["users"])
+          tags=["users"],
+          deprecated=True)
 def login_a_user():
     """_summary_
 
@@ -37,13 +58,17 @@ def login_a_user():
 
 @user.get(path="/users/",
           status_code=status.HTTP_200_OK,
+          response_model=List[User],
           summary="Show all users",
           tags=["users"])
 def get_users():
-    """_summary_
+    """_summary_:</br> </br> This path operation, get all users
 
+    Args:
+        _Args_: </br> </br>None, Only Select Table database and response
+    
     Returns:
-        _type_: _description_
+        _type_: </br> </br> List all Users
     """
     return conn.execute(users.select()).fetchall()
 

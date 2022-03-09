@@ -6,8 +6,11 @@ from uuid import uuid4 as uuid
 
 class User(BaseModel):
     id : Optional[int]
-    name : str = Field (...,
-                        min_length=50,
+    first_name : str = Field (...,
+                        min_length=1,
+                        max_length=255)
+    last_name : str = Field (...,
+                        min_length=1,
                         max_length=255)
     email: EmailStr = Field(
                         default="example@example.com")
